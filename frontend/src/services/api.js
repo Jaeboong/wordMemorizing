@@ -1,6 +1,21 @@
 import axios from 'axios';
+import { getToken } from '../utils/auth';
 
 const API_URL = 'http://localhost:5000/api';
+
+// axios 인터셉터 설정 - 모든 요청에 자동으로 인증 토큰 포함
+axios.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // 단어 관련 API
 export const wordApi = {

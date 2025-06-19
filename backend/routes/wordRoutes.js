@@ -4,6 +4,10 @@ const { Word, WordGroup } = require('../models');
 const { Op } = require('sequelize');
 const { validateWords } = require('../utils/wordValidator');
 const { sequelize } = require('../models');
+const { authenticateToken } = require('../middleware/auth');
+
+// 모든 라우트에 인증 미들웨어 적용
+router.use(authenticateToken);
 
 // 단어 등록
 router.post('/', async (req, res) => {
@@ -14,6 +18,18 @@ router.post('/', async (req, res) => {
   }
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     const word = await Word.create({
       group_id: groupId,
       english,
@@ -33,7 +49,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 모든 단어 조회
+// 모든 단어 조회 (사용자별)
 router.get('/', async (req, res) => {
   try {
     const words = await Word.findAll({
@@ -41,6 +57,7 @@ router.get('/', async (req, res) => {
         {
           model: WordGroup,
           as: 'group',
+          where: { user_id: req.user.id },
           attributes: ['name']
         }
       ],
@@ -64,11 +81,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 특정 그룹의 단어 조회
+// 특정 그룹의 단어 조회 (사용자별)
 router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     const words = await Word.findAll({
       where: { group_id: groupId },
       order: [['id', 'DESC']]
@@ -81,7 +110,7 @@ router.get('/group/:groupId', async (req, res) => {
   }
 });
 
-// 단어 검색 (영어 또는 한글)
+// 단어 검색 (영어 또는 한글) - 사용자별
 router.get('/search', async (req, res) => {
   const { keyword } = req.query;
   
@@ -101,6 +130,7 @@ router.get('/search', async (req, res) => {
         {
           model: WordGroup,
           as: 'group',
+          where: { user_id: req.user.id },
           attributes: ['name']
         }
       ],
@@ -124,7 +154,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// 단어 수정
+// 단어 수정 (사용자별)
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { english, korean, groupId } = req.body;
@@ -134,17 +164,36 @@ router.put('/:id', async (req, res) => {
   }
   
   try {
-    const word = await Word.findByPk(id);
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
+    const word = await Word.findOne({
+      where: { id: id },
+      include: [{
+        model: WordGroup,
+        as: 'group',
+        where: { user_id: req.user.id }
+      }]
+    });
     
     if (!word) {
       return res.status(404).json({ message: '해당 ID의 단어를 찾을 수 없습니다.' });
     }
     
-    word.english = english;
-    word.korean = korean;
-    word.group_id = groupId;
-    
-    await word.save();
+    await word.update({
+      english,
+      korean,
+      group_id: groupId
+    });
     
     res.json({ 
       id, 
@@ -159,12 +208,19 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// 단어 삭제
+// 단어 삭제 (사용자별)
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   
   try {
-    const word = await Word.findByPk(id);
+    const word = await Word.findOne({
+      where: { id: id },
+      include: [{
+        model: WordGroup,
+        as: 'group',
+        where: { user_id: req.user.id }
+      }]
+    });
     
     if (!word) {
       return res.status(404).json({ message: '해당 ID의 단어를 찾을 수 없습니다.' });
@@ -179,13 +235,19 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// 그룹 단어 AI 검증
+// 그룹 단어 AI 검증 (사용자별)
 router.post('/validate-group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   
   try {
-    // 그룹 존재 여부 확인
-    const group = await WordGroup.findByPk(groupId);
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
     if (!group) {
       return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
     }
@@ -200,140 +262,67 @@ router.post('/validate-group/:groupId', async (req, res) => {
       return res.status(400).json({ message: '그룹에 단어가 없습니다.' });
     }
     
-    // 단어 AI 검증
-    const wordData = words.map(word => ({
-      id: word.id,
-      english: word.english,
-      korean: word.korean
-    }));
-    
-    const validationResults = await validateWords(wordData);
-    console.log('검증 결과 전체:', JSON.stringify(validationResults, null, 2));
-    
-    // 문제가 있는 단어만 필터링 (isCorrect가 false인 것)
-    const problemWords = validationResults.filter(result => !result.isCorrect);
-    console.log('문제가 있는 단어 수:', problemWords.length);
+    // AI 검증 수행
+    const results = await validateWords(words);
     
     res.json({
       groupId,
       groupName: group.name,
       totalWords: words.length,
-      problemCount: problemWords.length,
-      results: problemWords
+      results
     });
   } catch (error) {
-    console.error('단어 AI 검증 중 오류 발생:', error);
-    res.status(500).json({ 
-      message: '서버 오류로 단어 검증에 실패했습니다.', 
-      error: error.message 
-    });
+    console.error('AI 검증 중 오류 발생:', error);
+    res.status(500).json({ message: '서버 오류로 AI 검증에 실패했습니다.' });
   }
 });
 
-// 단어 일괄 수정 (AI 검증 결과 반영)
-router.post('/update-batch', async (req, res) => {
+// 단어 일괄 수정 (사용자별)
+router.post('/batch-update', async (req, res) => {
   const { words } = req.body;
   
   if (!Array.isArray(words) || words.length === 0) {
     return res.status(400).json({ message: '수정할 단어 목록이 필요합니다.' });
   }
   
-  console.log('수정할 단어 목록:', JSON.stringify(words, null, 2));
-  
   try {
-    // 트랜잭션 내에서 단어 수정
-    const result = await sequelize.transaction(async (t) => {
+    const results = await sequelize.transaction(async (t) => {
       const updateResults = [];
       
       for (const wordData of words) {
-        // 널 체크 및 기본값 설정
-        const wordId = wordData.id;
-        const suggestedEnglish = wordData.suggestedEnglish || null;
-        const suggestedKorean = wordData.suggestedKorean || null;
-        // correctionType이 없으면 기본적으로 '수정'으로 처리
-        const correctionType = wordData.correctionType || '수정';
+        const { id, english, korean } = wordData;
         
-        if (!wordId || (!suggestedEnglish && !suggestedKorean)) continue;
+        if (!id || !english || !korean) continue;
         
-        const word = await Word.findByPk(wordId, { transaction: t });
+        // 사용자의 단어인지 확인
+        const word = await Word.findOne({
+          where: { id: id },
+          include: [{
+            model: WordGroup,
+            as: 'group',
+            where: { user_id: req.user.id }
+          }],
+          transaction: t
+        });
         
         if (word) {
-          const oldEnglish = word.english;
-          const oldKorean = word.korean;
-          
-          console.log(`처리 중인 단어 ID ${wordId}: `, {
-            oldEnglish,
-            suggestedEnglish,
-            oldKorean,
-            suggestedKorean,
-            correctionType
+          await word.update({ english, korean }, { transaction: t });
+          updateResults.push({
+            id,
+            english,
+            korean,
+            updated: true
           });
-          
-          let englishChanged = false;
-          let koreanChanged = false;
-          
-          // 영어 단어 수정 (제안된 영어가 있고 현재 영어와 다른 경우)
-          if (suggestedEnglish && suggestedEnglish !== oldEnglish) {
-            console.log(`영어 단어 수정: ${oldEnglish} -> ${suggestedEnglish}`);
-            word.english = suggestedEnglish;
-            englishChanged = true;
-          }
-          
-          // 한글 의미 처리
-          if (suggestedKorean) {
-            // 의미 추가인 경우 기존 의미에 추가
-            if (correctionType === '추가') {
-              // 이미 같은 내용이 있는지 확인하고, 없으면 추가
-              if (!oldKorean.includes(suggestedKorean)) {
-                word.korean = oldKorean.trim() + ', ' + suggestedKorean.trim();
-                console.log('추가 후 결과:', word.korean);
-                koreanChanged = true;
-              } else {
-                console.log('이미 포함된 내용, 추가하지 않음');
-              }
-            } 
-            // 수정인 경우 또는 기타 경우 대체
-            else {
-              // 한글 뜻이 다른 경우에만 수정
-              if (oldKorean !== suggestedKorean) {
-                word.korean = suggestedKorean;
-                console.log('수정 후 결과:', word.korean);
-                koreanChanged = true;
-              } else {
-                console.log('한글 뜻이 동일하여 수정하지 않음');
-              }
-            }
-          }
-          
-          if (englishChanged || koreanChanged) {
-            await word.save({ transaction: t });
-            console.log(`단어 ID ${wordId} 저장 완료: 영어 변경=${englishChanged}, 한글 변경=${koreanChanged}`);
-            
-            updateResults.push({
-              id: wordId,
-              oldEnglish,
-              newEnglish: word.english,
-              englishChanged,
-              oldKorean,
-              newKorean: word.korean,
-              koreanChanged,
-              correctionType
-            });
-          } else {
-            console.log(`단어 ID ${wordId}: 변경사항 없음`);
-          }
         }
       }
       
       return updateResults;
     });
     
-    console.log('업데이트 결과:', JSON.stringify(result, null, 2));
-    
     res.json({
-      updatedCount: result.length,
-      updatedWords: result,
-      message: `${result.length}개 단어가 성공적으로 수정되었습니다.`
+      updatedCount: results.length,
+      results,
+      message: `${results.length}개 단어가 성공적으로 수정되었습니다.`
     });
   } catch (error) {
     console.error('단어 일괄 수정 중 오류 발생:', error);

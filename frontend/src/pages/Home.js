@@ -1,28 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { groupApi, wordApi } from '../services/api';
+import { isAuthenticated, getUserInfo } from '../utils/auth';
+import KakaoLogin from '../components/KakaoLogin';
 
 const Home = () => {
   const [groups, setGroups] = useState([]);
   const [recentWords, setRecentWords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const groupsData = await groupApi.getAllGroups();
-        setGroups(groupsData);
+    const checkAuthAndFetchData = async () => {
+      const authStatus = isAuthenticated();
+      setLoggedIn(authStatus);
+
+      if (authStatus) {
+        const userInfo = await getUserInfo();
+        setUser(userInfo);
         
-        const wordsData = await wordApi.getAllWords();
-        setRecentWords(wordsData.slice(0, 5)); // 최근 5개 단어만 표시
-      } catch (error) {
-        console.error('데이터 로딩 중 오류 발생:', error);
-      } finally {
-        setLoading(false);
+        // 로그인된 경우에만 데이터 로드
+        try {
+          const groupsData = await groupApi.getAllGroups();
+          setGroups(groupsData);
+          
+          const wordsData = await wordApi.getAllWords();
+          setRecentWords(wordsData.slice(0, 5)); // 최근 5개 단어만 표시
+        } catch (error) {
+          console.error('데이터 로딩 중 오류 발생:', error);
+        }
       }
+      
+      setLoading(false);
     };
 
-    fetchData();
+    checkAuthAndFetchData();
   }, []);
 
   if (loading) {
@@ -35,11 +48,60 @@ const Home = () => {
     );
   }
 
+  // 비로그인 상태일 때 표시할 화면
+  if (!loggedIn) {
+    return (
+      <div className="container mt-4">
+        <div className="jumbotron bg-light p-5 rounded text-center">
+          <h1 className="display-4">단암시</h1>
+          <p className="lead">단어 암기 시스템 단암시입니다! 카카오 로그인 후 이용해주세요!</p>
+          <hr className="my-4" />
+          <div className="alert alert-info">
+            <h5>🔐 로그인이 필요한 서비스입니다</h5>
+            <p className="mb-3">개인별 맞춤 단어 학습을 위해 카카오 로그인을 해주세요.</p>
+            <KakaoLogin />
+          </div>
+        </div>
+
+        <div className="row mt-5">
+          <div className="col-md-4">
+            <div className="card text-center">
+              <div className="card-body">
+                <i className="bi bi-collection text-primary" style={{ fontSize: '2rem' }}></i>
+                <h5 className="card-title mt-3">단어 그룹 관리</h5>
+                <p className="card-text">주제별로 단어를 분류하고 체계적으로 관리하세요.</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card text-center">
+              <div className="card-body">
+                <i className="bi bi-journal-text text-success" style={{ fontSize: '2rem' }}></i>
+                <h5 className="card-title mt-3">단어 암기 테스트</h5>
+                <p className="card-text">다양한 방식의 테스트로 효과적으로 단어를 암기하세요.</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card text-center">
+              <div className="card-body">
+                <i className="bi bi-graph-up text-warning" style={{ fontSize: '2rem' }}></i>
+                <h5 className="card-title mt-3">학습 진도 관리</h5>
+                <p className="card-text">테스트 결과를 분석하고 학습 진도를 확인하세요.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 로그인된 상태일 때 표시할 화면
   return (
     <div className="container mt-4">
       <div className="jumbotron bg-light p-5 rounded">
-        <h1 className="display-4">단어 암기 시스템</h1>
-        <p className="lead">단어를 등록하고 그룹별로 관리하며 테스트를 통해 효과적으로 암기하세요.</p>
+        <h1 className="display-4">안녕하세요, {user?.nickname}님! 👋</h1>
+        <p className="lead">단어 암기 시스템 단암시입니다!</p>
         <hr className="my-4" />
         <p>단어 그룹을 만들고 단어를 등록한 후 테스트를 시작해보세요.</p>
         <Link to="/groups" className="btn btn-primary btn-lg me-2">

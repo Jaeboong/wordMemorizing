@@ -1,12 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { isAuthenticated, getUserInfo, logout } from '../utils/auth';
+import KakaoLogin from './KakaoLogin';
 
 const Navbar = () => {
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    if (isAuthenticated()) {
+      setIsLoggedIn(true);
+      const userInfo = await getUserInfo();
+      setUser(userInfo);
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsLoggedIn(false);
+    setUser(null);
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
       <div className="container">
-        <Link className="navbar-brand" to="/">단어 암기 시스템</Link>
+        <Link className="navbar-brand" to="/">단암시</Link>
         <button 
           className="navbar-toggler" 
           type="button" 
@@ -36,10 +62,24 @@ const Navbar = () => {
               <Link className="nav-link" to="/history">테스트 기록</Link>
             </li>
           </ul>
-          <div className="d-flex">
-            <Link className="nav-link text-white" to="/search">
+          <div className="d-flex align-items-center">
+            <Link className="nav-link text-white me-3" to="/search">
               <i className="bi bi-search"></i> 단어 검색
             </Link>
+            
+            {isLoggedIn && user ? (
+              <div className="d-flex align-items-center">
+                <span className="text-white me-3">{user.nickname}님</span>
+                <button 
+                  className="btn btn-outline-light btn-sm"
+                  onClick={handleLogout}
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <KakaoLogin />
+            )}
           </div>
         </div>
       </div>

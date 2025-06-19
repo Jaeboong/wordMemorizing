@@ -3,6 +3,10 @@ const router = express.Router();
 const { WordGroup, Word, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { validateWords } = require('../utils/wordValidator');
+const { authenticateToken } = require('../middleware/auth');
+
+// 모든 라우트에 인증 미들웨어 적용
+router.use(authenticateToken);
 
 // 그룹 생성
 router.post('/', async (req, res) => {
@@ -13,7 +17,10 @@ router.post('/', async (req, res) => {
   }
   
   try {
-    const group = await WordGroup.create({ name });
+    const group = await WordGroup.create({ 
+      name, 
+      user_id: req.user.id 
+    });
     
     res.status(201).json({
       id: group.id,
@@ -31,8 +38,13 @@ router.get('/:id/validate', async (req, res) => {
   const { id } = req.params;
   
   try {
-    // 그룹 존재 확인
-    const group = await WordGroup.findByPk(id);
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: id,
+        user_id: req.user.id 
+      }
+    });
     
     if (!group) {
       return res.status(404).json({ message: '해당 ID의 그룹을 찾을 수 없습니다.' });
@@ -83,8 +95,13 @@ router.post('/:id/update-words', async (req, res) => {
   }
   
   try {
-    // 그룹 존재 확인
-    const group = await WordGroup.findByPk(id);
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: id,
+        user_id: req.user.id 
+      }
+    });
     
     if (!group) {
       return res.status(404).json({ message: '해당 ID의 그룹을 찾을 수 없습니다.' });
@@ -193,24 +210,20 @@ router.post('/:id/update-words', async (req, res) => {
   }
 });
 
-// 모든 그룹 조회
+// 모든 그룹 조회 (사용자별)
 router.get('/', async (req, res) => {
   try {
     const groups = await WordGroup.findAll({
+      where: { user_id: req.user.id },
       attributes: {
         include: [
           [
-            // 단어 개수 계산
-            sequelize.literal(`(
-              SELECT COUNT(*)
-              FROM words
-              WHERE words.group_id = WordGroup.id
-            )`),
+            sequelize.literal('(SELECT COUNT(*) FROM words WHERE words.group_id = WordGroup.id)'),
             'word_count'
           ]
         ]
       },
-      order: [['id', 'DESC']]
+      order: [['created_at', 'DESC']]
     });
     
     res.json(groups);
@@ -220,35 +233,34 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 특정 그룹 조회
+// 특정 그룹 조회 (사용자별)
 router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  
   try {
-    const group = await WordGroup.findByPk(id);
+    const group = await WordGroup.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.user.id 
+      },
+      include: [{
+        model: Word,
+        as: 'words',
+        order: [['created_at', 'DESC']]
+      }]
+    });
     
     if (!group) {
       return res.status(404).json({ message: '해당 ID의 그룹을 찾을 수 없습니다.' });
     }
     
-    const words = await Word.findAll({
-      where: { group_id: id },
-      order: [['id', 'DESC']]
-    });
-    
-    res.json({
-      ...group.toJSON(),
-      words
-    });
+    res.json(group);
   } catch (error) {
     console.error('그룹 조회 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류로 그룹 조회에 실패했습니다.' });
   }
 });
 
-// 그룹 수정
+// 그룹 수정 (사용자별)
 router.put('/:id', async (req, res) => {
-  const { id } = req.params;
   const { name } = req.body;
   
   if (!name) {
@@ -256,36 +268,55 @@ router.put('/:id', async (req, res) => {
   }
   
   try {
-    const group = await WordGroup.findByPk(id);
+    const group = await WordGroup.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.user.id 
+      }
+    });
     
     if (!group) {
       return res.status(404).json({ message: '해당 ID의 그룹을 찾을 수 없습니다.' });
     }
     
-    group.name = name;
-    await group.save();
+    await group.update({ name });
     
-    res.json({ id, name, message: '그룹이 성공적으로 수정되었습니다.' });
+    res.json({
+      id: group.id,
+      name: group.name,
+      message: '그룹이 성공적으로 수정되었습니다.'
+    });
   } catch (error) {
     console.error('그룹 수정 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류로 그룹 수정에 실패했습니다.' });
   }
 });
 
-// 그룹 삭제
+// 그룹 삭제 (사용자별)
 router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  
   try {
-    const group = await WordGroup.findByPk(id);
+    const group = await WordGroup.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.user.id 
+      }
+    });
     
     if (!group) {
       return res.status(404).json({ message: '해당 ID의 그룹을 찾을 수 없습니다.' });
     }
     
-    await group.destroy();
+    // 그룹과 관련된 단어들도 함께 삭제
+    await sequelize.transaction(async (t) => {
+      await Word.destroy({
+        where: { group_id: req.params.id },
+        transaction: t
+      });
+      
+      await group.destroy({ transaction: t });
+    });
     
-    res.json({ message: '그룹이 성공적으로 삭제되었습니다.' });
+    res.json({ message: '그룹과 관련 단어들이 성공적으로 삭제되었습니다.' });
   } catch (error) {
     console.error('그룹 삭제 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류로 그룹 삭제에 실패했습니다.' });

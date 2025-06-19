@@ -1,14 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { UserPreference } = require('../models');
+const { authenticateToken } = require('../middleware/auth');
 
-// 설정 값 조회
+// 모든 라우트에 인증 미들웨어 적용
+router.use(authenticateToken);
+
+// 설정 값 조회 (사용자별)
 router.get('/:key', async (req, res) => {
   const { key } = req.params;
   
   try {
     const preference = await UserPreference.findOne({
-      where: { preference_key: key }
+      where: { 
+        preference_key: key,
+        user_id: req.user.id 
+      }
     });
     
     if (!preference) {
@@ -22,7 +29,7 @@ router.get('/:key', async (req, res) => {
   }
 });
 
-// 설정 값 저장/수정
+// 설정 값 저장/수정 (사용자별)
 router.post('/:key', async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;
@@ -34,10 +41,14 @@ router.post('/:key', async (req, res) => {
   try {
     // 이미 존재하는 설정인지 확인
     const [preference, created] = await UserPreference.findOrCreate({
-      where: { preference_key: key },
+      where: { 
+        preference_key: key,
+        user_id: req.user.id 
+      },
       defaults: { 
         preference_key: key,
-        preference_value: value
+        preference_value: value,
+        user_id: req.user.id
       }
     });
     
@@ -58,10 +69,12 @@ router.post('/:key', async (req, res) => {
   }
 });
 
-// 모든 설정 조회
+// 모든 설정 조회 (사용자별)
 router.get('/', async (req, res) => {
   try {
-    const preferences = await UserPreference.findAll();
+    const preferences = await UserPreference.findAll({
+      where: { user_id: req.user.id }
+    });
     
     const result = preferences.map(pref => ({
       key: pref.preference_key,

@@ -4,14 +4,22 @@ module.exports = (sequelize, DataTypes) => {
   class UserPreference extends Model {
     static associate(models) {
       // define association here
+      this.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
     }
   }
   
   UserPreference.init({
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
     preference_key: {
       type: DataTypes.STRING(50),
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
     preference_value: {
       type: DataTypes.STRING(255),
@@ -38,10 +46,15 @@ module.exports = (sequelize, DataTypes) => {
         fields: [{ name: 'id' }]
       },
       {
-        name: 'preference_key_unique',
+        name: 'fk_preference_user',
+        using: 'BTREE',
+        fields: [{ name: 'user_id' }]
+      },
+      {
+        name: 'user_preference_unique',
         unique: true,
         using: 'BTREE',
-        fields: [{ name: 'preference_key' }]
+        fields: [{ name: 'user_id' }, { name: 'preference_key' }]
       }
     ]
   });

@@ -4,11 +4,20 @@ module.exports = (sequelize, DataTypes) => {
   class TestResult extends Model {
     static associate(models) {
       // define association here
+      this.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
       this.belongsTo(models.WordGroup, { foreignKey: 'group_id', as: 'group' });
     }
   }
   
   TestResult.init({
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
     group_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -40,6 +49,11 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
         using: 'BTREE',
         fields: [{ name: 'id' }]
+      },
+      {
+        name: 'fk_test_user',
+        using: 'BTREE',
+        fields: [{ name: 'user_id' }]
       },
       {
         name: 'fk_test_group',

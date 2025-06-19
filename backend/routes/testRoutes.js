@@ -2,7 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { Word, TestResult, WordGroup, sequelize } = require('../models');
 const { evaluateAnswer } = require('../utils/openaiUtils');
+const { authenticateToken } = require('../middleware/auth');
 
+// 모든 라우트에 인증 미들웨어 적용
+router.use(authenticateToken);
+
+// 테스트용 단어 가져오기 (사용자별)
 router.get('/words/:groupId/:count', async (req, res) => {
   const { groupId, count } = req.params;
   
@@ -11,6 +16,18 @@ router.get('/words/:groupId/:count', async (req, res) => {
   }
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     // 해당 그룹의 단어 개수 확인
     const totalWords = await Word.count({
       where: { group_id: groupId }
@@ -43,7 +60,7 @@ router.get('/words/:groupId/:count', async (req, res) => {
   }
 });
 
-// 테스트 결과 저장
+// 테스트 결과 저장 (사용자별)
 router.post('/results', async (req, res) => {
   const { groupId, totalQuestions, correctAnswers } = req.body;
   
@@ -52,7 +69,20 @@ router.post('/results', async (req, res) => {
   }
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     const testResult = await TestResult.create({
+      user_id: req.user.id,
       group_id: groupId,
       total_questions: totalQuestions,
       correct_answers: correctAnswers
@@ -73,7 +103,7 @@ router.post('/results', async (req, res) => {
   }
 });
 
-// AI 채점을 통한 테스트 결과 평가 및 저장
+// AI 채점을 통한 테스트 결과 평가 및 저장 (사용자별)
 router.post('/ai-evaluation', async (req, res) => {
   const { groupId, answers } = req.body;
   
@@ -82,6 +112,18 @@ router.post('/ai-evaluation', async (req, res) => {
   }
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     const evaluationResults = [];
     let correctCount = 0;
     
@@ -111,6 +153,7 @@ router.post('/ai-evaluation', async (req, res) => {
     
     // 테스트 결과 저장
     const testResult = await TestResult.create({
+      user_id: req.user.id,
       group_id: groupId,
       total_questions: answers.length,
       correct_answers: correctCount
@@ -132,13 +175,28 @@ router.post('/ai-evaluation', async (req, res) => {
   }
 });
 
-// 테스트 기록 조회
+// 특정 그룹 테스트 기록 조회 (사용자별)
 router.get('/history/:groupId', async (req, res) => {
   const { groupId } = req.params;
   
   try {
+    // 사용자의 그룹인지 확인
+    const group = await WordGroup.findOne({
+      where: { 
+        id: groupId,
+        user_id: req.user.id 
+      }
+    });
+    
+    if (!group) {
+      return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
+    }
+    
     const testResults = await TestResult.findAll({
-      where: { group_id: groupId },
+      where: { 
+        group_id: groupId,
+        user_id: req.user.id 
+      },
       include: [
         {
           model: WordGroup,
@@ -166,14 +224,16 @@ router.get('/history/:groupId', async (req, res) => {
   }
 });
 
-// 모든 테스트 기록 조회
+// 모든 테스트 기록 조회 (사용자별)
 router.get('/history', async (req, res) => {
   try {
     const testResults = await TestResult.findAll({
+      where: { user_id: req.user.id },
       include: [
         {
           model: WordGroup,
           as: 'group',
+          where: { user_id: req.user.id },
           attributes: ['name']
         }
       ],
