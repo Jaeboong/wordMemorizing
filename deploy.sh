@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 설정 변수
-PROJECT_DIR="/home/$(whoami)/word-memorization-app"
+PROJECT_DIR="/home/$(whoami)/Project/wordMemorizing"
 FRONTEND_PORT=3000
 BACKEND_PORT=5000
 DOMAIN="danamsi.site"
@@ -241,8 +241,4 @@ echo "- PM2 재시작: pm2 restart all"
 echo "- PM2 중지: pm2 stop all"
 echo "- PM2 삭제: pm2 delete all"
 echo ""
-if [ ! -f "backend/.env" ] || grep -q "your_.*_here" backend/.env; then
-    echo -e "${YELLOW}⚠️  중요: backend/.env 파일의 실제 API 키와 시크릿을 설정하세요!${NC}"
-fi
-echo ""
-log_info "배포 스크립트 실행 완료!"
+log_info "배포 스크립트 실행 완료!" 

@@ -3,7 +3,8 @@ import React from 'react';
 const KakaoLogin = () => {
   const handleKakaoLogin = () => {
     // 백엔드의 카카오 로그인 엔드포인트로 이동
-    window.location.href = 'http://localhost:5000/api/auth/kakao';
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    window.location.href = `${API_URL}/auth/kakao`;
   };
 
   return (
