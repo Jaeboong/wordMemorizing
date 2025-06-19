@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 설정 변수
-PROJECT_DIR="/home/$(whoami)/word-memorization-app"
+PROJECT_DIR="/home/$(whoami)/Project/wordMemorizing"
 FRONTEND_PORT=3000
 BACKEND_PORT=5000
 DOMAIN="danamsi.site"
