@@ -2,6 +2,22 @@
 
 단어를 등록하고 그룹별로 관리하며 테스트를 통해 효과적으로 암기할 수 있는 웹 애플리케이션입니다.
 
+## 프론트 수정 후 적용
+
+```
+# 1. 프론트엔드 디렉토리로 이동
+cd frontend
+
+# 2. 빌드 실행
+npm run build
+
+# 3. 빌드 완료 후 복사
+sudo cp -r build/* /var/www/wordapp/
+
+# 4. nginx 재시작
+sudo systemctl reload nginx
+```
+
 ## 주요 기능
 
 1. **단어 등록**
