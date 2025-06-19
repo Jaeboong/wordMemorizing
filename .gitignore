@@ -48,4 +48,6 @@ temp/
 
 # 기타
 .DS_Store
-Thumbs.db 
+Thumbs.db frontend/build/
+ecosystem.config.js
+logs/
