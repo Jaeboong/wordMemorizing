@@ -77,7 +77,7 @@ PORT=5000
 NODE_ENV=production
 
 # 프론트엔드 URL (프로덕션)
-FRONTEND_URL=http://$DOMAIN:$FRONTEND_PORT
+FRONTEND_URL=https://$DOMAIN
 
 # OpenAI API 키 (실제 키로 교체 필요)
 OPENAI_API_KEY=your_openai_api_key_here
@@ -85,7 +85,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 # 카카오 로그인 (프로덕션)
 KAKAO_CLIENT_ID=your_kakao_client_id_here
 KAKAO_CLIENT_SECRET=
-KAKAO_CALLBACK_URL=http://$DOMAIN:$BACKEND_PORT/api/auth/kakao/callback
+KAKAO_CALLBACK_URL=https://$DOMAIN/api/auth/kakao/callback
 
 # JWT 및 세션 설정 (실제 값으로 교체 필요)
 JWT_SECRET=your_jwt_secret_here

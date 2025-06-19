@@ -3,28 +3,28 @@ version: '3.8'
 services:
   mariadb:
     image: mariadb:latest
-    container_name: word
+    container_name: word2
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: word
       MYSQL_USER: word1234
       MYSQL_PASSWORD: word1234
     ports:
-      - "3309:3306"
+      - "3311:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
     restart: unless-stopped
 
   phpmyadmin:
     image: phpmyadmin:latest
-    container_name: word-phpmyadmin
+    container_name: word-phpmyadmin2
     environment:
       PMA_HOST: mariadb
       PMA_USER: word1234
       PMA_PASSWORD: word1234
       MYSQL_ROOT_PASSWORD: 1234
     ports:
-      - "9010:80"
+      - "9011:80"
     depends_on:
       - mariadb
     restart: unless-stopped

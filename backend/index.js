@@ -19,7 +19,9 @@ app.use(cors({
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'https://danamsi.site',
     'http://danamsi.site',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'http://localhost:4000', // 로컬 개발용 프론트엔드
+    'http://localhost:6000'  // 로컬 개발용 백엔드
   ],
   credentials: true
 }));
@@ -50,7 +52,7 @@ app.use('/api/preferences', preferenceRoutes);
 // 데이터베이스 연결 및 서버 시작
 async function startServer() {
   try {
-    // 데이터베이스 연결 및 동기화 (force: false는 테이블이 없을 때만 생성)
+    // 데이터베이스 연결 및 동기화 (기존 데이터 보호)
     await sequelize.sync({ force: false });
     console.log('데이터베이스 연결 및 동기화 완료');
 

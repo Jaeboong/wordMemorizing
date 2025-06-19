@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { isAuthenticated, getUserInfo, logout } from '../utils/auth';
 import KakaoLogin from './KakaoLogin';
@@ -7,6 +7,7 @@ import KakaoLogin from './KakaoLogin';
 const Navbar = () => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuthStatus();
@@ -27,6 +28,14 @@ const Navbar = () => {
     logout();
     setIsLoggedIn(false);
     setUser(null);
+  };
+
+  // 보호된 메뉴 클릭 시 처리
+  const handleProtectedMenuClick = (e, menuName) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      alert(`${menuName}은(는) 로그인 후 이용해주세요.`);
+    }
   };
 
   return (
@@ -50,37 +59,64 @@ const Navbar = () => {
               <Link className="nav-link" to="/">홈</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/groups">단어 그룹</Link>
+              <Link 
+                className={`nav-link ${!isLoggedIn ? 'text-muted' : ''}`}
+                to="/groups"
+                onClick={(e) => handleProtectedMenuClick(e, '단어 그룹 관리')}
+                style={!isLoggedIn ? { cursor: 'not-allowed' } : {}}
+              >
+                단어 그룹
+              </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/words">단어 관리</Link>
+              <Link 
+                className={`nav-link ${!isLoggedIn ? 'text-muted' : ''}`}
+                to="/words"
+                onClick={(e) => handleProtectedMenuClick(e, '단어 관리')}
+                style={!isLoggedIn ? { cursor: 'not-allowed' } : {}}
+              >
+                단어 관리
+              </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/tests">테스트</Link>
+              <Link 
+                className={`nav-link ${!isLoggedIn ? 'text-muted' : ''}`}
+                to="/tests"
+                onClick={(e) => handleProtectedMenuClick(e, '테스트')}
+                style={!isLoggedIn ? { cursor: 'not-allowed' } : {}}
+              >
+                테스트
+              </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/history">테스트 기록</Link>
+              <Link 
+                className={`nav-link ${!isLoggedIn ? 'text-muted' : ''}`}
+                to="/history"
+                onClick={(e) => handleProtectedMenuClick(e, '테스트 기록')}
+                style={!isLoggedIn ? { cursor: 'not-allowed' } : {}}
+              >
+                테스트 기록
+              </Link>
             </li>
           </ul>
-          <div className="d-flex align-items-center">
-            <Link className="nav-link text-white me-3" to="/search">
-              <i className="bi bi-search"></i> 단어 검색
-            </Link>
-            
-            {isLoggedIn && user ? (
-              <div className="d-flex align-items-center">
-                <span className="text-white me-3">{user.nickname}님</span>
-                <button 
-                  className="btn btn-outline-light btn-sm"
-                  onClick={handleLogout}
-                >
-                  로그아웃
-                </button>
-              </div>
-            ) : (
-              <KakaoLogin />
-            )}
-          </div>
+          
+          <Link className="nav-link text-white me-3" to="/search">
+            <i className="bi bi-search"></i> 단어 검색
+          </Link>
+          
+          {isLoggedIn && user ? (
+            <div className="d-flex align-items-center">
+              <span className="text-white me-3">{user.nickname}님</span>
+              <button 
+                className="btn btn-outline-light btn-sm"
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <KakaoLogin />
+          )}
         </div>
       </div>
     </nav>

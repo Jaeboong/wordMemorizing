@@ -1,11 +1,14 @@
 import Cookies from 'js-cookie';
 
+// API URL 환경변수에서 가져오기 (로컬 개발용 기본값 6000 포트)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
 // 토큰 저장
 export const setToken = (token) => {
   Cookies.set('auth_token', token, { expires: 7 }); // 7일간 유지
 };
 
-// 토큰 가져오기
+// 토큰 가져오기 
 export const getToken = () => {
   return Cookies.get('auth_token');
 };
@@ -35,7 +38,7 @@ export const getUserInfo = async () => {
   if (!token) return null;
 
   try {
-    const response = await fetch('http://localhost:5000/api/auth/me', {
+    const response = await fetch(`${API_URL}/auth/me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

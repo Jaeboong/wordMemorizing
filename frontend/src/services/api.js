@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { getToken } from '../utils/auth';
 
-const API_URL = 'http://localhost:5000/api';
+// 로컬 개발용 API URL (환경변수가 제대로 읽히지 않는 경우를 위한 임시 설정)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 // axios 인터셉터 설정 - 모든 요청에 자동으로 인증 토큰 포함
 axios.interceptors.request.use(
