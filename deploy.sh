@@ -60,9 +60,11 @@ log_info "Node.js 버전 확인..."
 node --version
 npm --version
 
-# 5. 환경 변수 파일 생성 (프로덕션용)
-log_info "환경 변수 파일 설정..."
-cat > backend/.env << EOF
+# 5. 환경 변수 파일 확인 및 생성
+log_info "환경 변수 파일 확인..."
+if [ ! -f "backend/.env" ]; then
+    log_warning "환경 변수 파일이 없습니다. 템플릿을 생성합니다."
+    cat > backend/.env << EOF
 # 데이터베이스 설정
 DB_HOST=localhost
 DB_PORT=3309
@@ -74,9 +76,26 @@ DB_DATABASE=word
 PORT=5000
 NODE_ENV=production
 
-EOF
+# 프론트엔드 URL (프로덕션)
+FRONTEND_URL=http://$DOMAIN:$FRONTEND_PORT
 
-log_success "환경 변수 파일 생성 완료"
+# OpenAI API 키 (실제 키로 교체 필요)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# 카카오 로그인 (프로덕션)
+KAKAO_CLIENT_ID=your_kakao_client_id_here
+KAKAO_CLIENT_SECRET=
+KAKAO_CALLBACK_URL=http://$DOMAIN:$BACKEND_PORT/api/auth/kakao/callback
+
+# JWT 및 세션 설정 (실제 값으로 교체 필요)
+JWT_SECRET=your_jwt_secret_here
+SESSION_SECRET=your_session_secret_here
+EOF
+    log_warning "환경 변수 파일을 수정해주세요: backend/.env"
+    log_warning "실제 API 키와 시크릿 값을 설정한 후 다시 배포하세요"
+else
+    log_success "환경 변수 파일이 존재합니다"
+fi
 
 # 6. 의존성 설치
 log_info "의존성 설치 중..."
@@ -222,4 +241,8 @@ echo "- PM2 재시작: pm2 restart all"
 echo "- PM2 중지: pm2 stop all"
 echo "- PM2 삭제: pm2 delete all"
 echo ""
-log_info "배포 스크립트 실행 완료!" 
+if [ ! -f "backend/.env" ] || grep -q "your_.*_here" backend/.env; then
+    echo -e "${YELLOW}⚠️  중요: backend/.env 파일의 실제 API 키와 시크릿을 설정하세요!${NC}"
+fi
+echo ""
+log_info "배포 스크립트 실행 완료!"
