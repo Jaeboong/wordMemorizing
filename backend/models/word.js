@@ -25,6 +25,25 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(255),
       allowNull: false
     },
+    // 가상 필드 - 카테고리에 따라 다른 라벨로 접근 가능
+    question: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.english;
+      },
+      set(value) {
+        this.setDataValue('english', value);
+      }
+    },
+    answer: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.korean;
+      },
+      set(value) {
+        this.setDataValue('korean', value);
+      }
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

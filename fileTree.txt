@@ -1,0 +1,163 @@
+----BACKEND----
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----      2025-06-19   오후 9:34                config
+d-----      2025-06-19   오후 4:35                middleware
+d-----      2025-06-12   오후 4:30                migrations
+d-----      2025-06-19   오후 4:21                models
+d-----      2025-06-19   오후 4:23                node_modules
+d-----      2025-06-19   오후 4:21                routes
+d-----      2025-06-12   오후 4:30                seeders
+d-----      2025-06-12  오후 11:07                utils
+-a----      2025-06-19  오후 10:44            674 .env
+-a----      2025-06-19  오후 10:28           2060 index.js
+-a----      2025-06-19   오후 4:23          99328 package-lock.json
+-a----      2025-06-19   오후 9:49            661 package.json
+-a----      2025-06-19   오후 4:58              1 reset-db.js   
+
+
+ 디렉터리: D:\Project\단어암기\backend\config
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-19   오후 9:34            937 config.js
+-a----      2025-06-12   오후 4:31            476 config.json
+-a----      2025-06-19   오후 4:53           1398 passport.js
+
+    디렉터리: D:\Project\단어암기\backend\middleware
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-19   오후 4:41           1493 auth.js
+
+    디렉터리: D:\Project\단어암기\backend\routes
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-19   오후 4:53           2044 authRoutes.js
+-a----      2025-06-19   오후 4:37          10483 groupRoutes.js
+-a----      2025-06-19   오후 4:39           2631 preferenceRoutes.js
+-a----      2025-06-19   오후 4:39           7975 testRoutes.js
+-a----      2025-06-19   오후 4:38           9209 wordRoutes.js
+
+    디렉터리: D:\Project\단어암기\backend\utils
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-13  오전 12:38           2843 openaiUtils.js
+-a----      2025-06-13  오전 12:15           6253 wordValidator.js
+
+    디렉터리: D:\Project\단어암기\backend\models
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-12   오후 4:40           1081 index.js
+-a----      2025-06-19   오후 4:53           1492 testResult.js
+-a----      2025-06-19   오후 4:53           1175 user.js
+-a----      2025-06-19   오후 4:53           1432 userPreference.js
+-a----      2025-06-12   오후 4:31           1109 word.js
+-a----      2025-06-19   오후 4:34           1200 wordGroup.js
+
+
+
+----FRONTEND----
+
+    디렉터리: D:\Project\단어암기\frontend
+
+
+    디렉터리: D:\Project\단어암기\frontend
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----      2025-06-19  오후 10:27                node_modules
+d-----      2025-06-11   오후 6:49                public
+d-----      2025-06-11   오후 8:40                src
+-a----      2025-06-19  오후 10:37            114 .env
+-a----      2025-06-19   오후 4:21         667757 package-lock.json
+-a----      2025-06-19  오후 10:28            977 package.json
+-a----      2025-06-14  오전 12:49           1968 README.md
+-a----      2025-06-14  오전 12:49             36 test.md
+
+
+PS D:\Project\단어암기\frontend>
+
+    디렉터리: D:\Project\단어암기\frontend\src
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----      2025-06-19   오후 9:46                components
+d-----      2025-06-19   오후 5:26                pages
+d-----      2025-06-19   오후 7:22                services
+d-----      2025-06-19   오후 7:22                utils
+-a----      2025-06-11   오후 6:48            564 App.css
+-a----      2025-06-19  오후 10:37           5136 App.js
+-a----      2025-06-11   오후 6:48            246 App.test.js
+-a----      2025-06-11   오후 6:48            366 index.css
+-a----      2025-06-11   오후 6:55            535 index.js
+-a----      2025-06-11   오후 6:48           2632 logo.svg
+-a----      2025-06-11   오후 6:48            362 reportWebVitals.js
+-a----      2025-06-11   오후 6:48            241 setupTests.js
+
+
+PS D:\Project\단어암기\frontend\src>
+
+    디렉터리: D:\Project\단어암기\frontend\src\components
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-19  오후 10:37           1386 KakaoLogin.js
+-a----      2025-06-19  오후 10:53           4178 Navbar.js
+-a----      2025-06-19   오후 9:46            677 ProtectedRoute.js
+
+
+PS D:\Project\단어암기\frontend\src> 
+
+    디렉터리: D:\Project\단어암기\frontend\src\pages
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-11   오후 8:40           9848 GroupDetail.js
+-a----      2025-06-13  오전 12:23          21631 Groups.js
+-a----      2025-06-19   오후 6:18           6794 Home.js
+-a----      2025-06-11   오후 6:54           4256 TestHistory.js
+-a----      2025-06-12  오후 10:04          13650 TestQuiz.js
+-a----      2025-06-12  오후 10:04           6562 TestResult.js
+-a----      2025-06-11   오후 6:54           4658 Tests.js
+-a----      2025-06-12  오후 10:02           6870 TestStart.js
+-a----      2025-06-11   오후 8:40           6057 WordEdit.js
+-a----      2025-06-19   오후 6:35           6843 Words.css
+-a----      2025-06-19   오후 6:46          26761 Words.js
+-a----      2025-06-11   오후 6:52           3683 WordSearch.js
+
+
+PS D:\Project\단어암기\frontend\src> 
+
+PS D:\Project\단어암기\frontend\src> ls utils
+
+
+    디렉터리: D:\Project\단어암기\frontend\src\utils
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----      2025-06-19  오후 10:37           1575 auth.js
+-a----      2025-06-11   오후 8:47            436 inputUtils.js
+-a----      2025-06-12   오후 3:59            638 storageUtils.js
+
+
+PS D:\Project\단어암기\frontend\src>
+
+
+
+
+

@@ -8,6 +8,8 @@ const Groups = () => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newGroupName, setNewGroupName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ENGLISH'); // 선택된 카테고리
+  const [categories, setCategories] = useState([]); // 사용 가능한 카테고리 목록
   const [editingGroup, setEditingGroup] = useState(null);
   const [editName, setEditName] = useState('');
   const [sortOption, setSortOption] = useState('newest'); // 기본 정렬: 최신순
@@ -26,6 +28,11 @@ const Groups = () => {
     // 컴포넌트 마운트 시 저장된 정렬 옵션 불러오기 및 그룹 데이터 가져오기
     const initData = async () => {
       try {
+        // 카테고리 목록 불러오기
+        const categoriesData = await groupApi.getCategories();
+        setCategories(categoriesData.categories);
+        setSelectedCategory(categoriesData.defaultCategory);
+        
         // 저장된 정렬 기준 불러오기
         const savedSortOption = await preferenceApi.getPreference(SORT_PREFERENCE_KEY);
         
@@ -104,7 +111,10 @@ const Groups = () => {
     }
 
     try {
-      await groupApi.createGroup({ name: newGroupName });
+      await groupApi.createGroup({ 
+        name: newGroupName,
+        category: selectedCategory 
+      });
       setNewGroupName('');
       fetchGroups(sortOption);
     } catch (error) {
@@ -266,16 +276,40 @@ const Groups = () => {
         <div className="card-header">새 그룹 추가</div>
         <div className="card-body">
           <form onSubmit={handleCreateGroup}>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="그룹 이름"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-              />
-              <button className="btn btn-primary" type="submit">추가</button>
+            <div className="row">
+              <div className="col-md-4 mb-2">
+                <select
+                  className="form-select"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  {categories.map(category => (
+                    <option key={category.key} value={category.key}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-8">
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="그룹 이름"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                  />
+                  <button className="btn btn-primary" type="submit">추가</button>
+                </div>
+              </div>
             </div>
+            {selectedCategory && categories.length > 0 && (
+              <div className="mt-2">
+                <small className="text-muted">
+                  {categories.find(c => c.key === selectedCategory)?.questionLabel} → {categories.find(c => c.key === selectedCategory)?.answerLabel} 형태로 학습 항목을 관리합니다.
+                </small>
+              </div>
+            )}
           </form>
         </div>
       </div>
@@ -348,6 +382,16 @@ const Groups = () => {
                       <span className="ms-2 badge bg-primary rounded-pill">
                         {group.word_count || 0}개 단어
                       </span>
+                      {group.categoryName && (
+                        <span className="ms-2 badge bg-secondary rounded-pill">
+                          {group.categoryName}
+                        </span>
+                      )}
+                      <div className="mt-1">
+                        <small className="text-muted">
+                          {group.questionLabel} → {group.answerLabel}
+                        </small>
+                      </div>
                     </div>
                     <div>
                       <button

@@ -13,6 +13,7 @@ const WordEdit = () => {
     korean: '',
     groupId: ''
   });
+  const [categoryConfig, setCategoryConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -24,8 +25,11 @@ const WordEdit = () => {
     try {
       setLoading(true);
       
-      // 모든 그룹 가져오기
-      const groupsData = await groupApi.getAllGroups();
+      // 모든 그룹과 카테고리 정보 가져오기
+      const [groupsData, categoriesData] = await Promise.all([
+        groupApi.getAllGroups(),
+        groupApi.getCategories()
+      ]);
       setGroups(groupsData);
       
       // 단어 정보 가져오기
@@ -45,6 +49,15 @@ const WordEdit = () => {
         korean: currentWord.korean,
         groupId: currentWord.group_id
       });
+      
+      // 해당 단어의 그룹 카테고리 찾기
+      const wordGroup = groupsData.find(g => g.id === currentWord.group_id);
+      if (wordGroup) {
+        const categoryConfig = categoriesData.categories.find(
+          cat => cat.key === (wordGroup.category || 'ENGLISH')
+        );
+        setCategoryConfig(categoryConfig);
+      }
     } catch (error) {
       console.error('데이터 로딩 중 오류 발생:', error);
       alert('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -115,12 +128,14 @@ const WordEdit = () => {
     <div className="container mt-4">
       <div className="card">
         <div className="card-header">
-          <h2>단어 수정</h2>
+          <h2>{categoryConfig?.questionLabel || '단어'} 수정</h2>
         </div>
         <div className="card-body">
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label htmlFor="english" className="form-label">영어 단어</label>
+              <label htmlFor="english" className="form-label">
+                {categoryConfig?.questionLabel || '영어 단어'}
+              </label>
               <input
                 type="text"
                 className="form-control"
@@ -129,13 +144,15 @@ const WordEdit = () => {
                 value={formData.english}
                 onChange={handleChange}
                 required
-                lang="en"
+                lang={categoryConfig?.key === 'ENGLISH' ? 'en' : 'ko'}
                 inputMode="text"
               />
             </div>
             
             <div className="mb-3">
-              <label htmlFor="korean" className="form-label">한글 해석</label>
+              <label htmlFor="korean" className="form-label">
+                {categoryConfig?.answerLabel || '한글 해석'}
+              </label>
               <input
                 type="text"
                 className="form-control"

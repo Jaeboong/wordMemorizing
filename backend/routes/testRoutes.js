@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Word, TestResult, WordGroup, sequelize } = require('../models');
 const { evaluateAnswer } = require('../utils/openaiUtils');
+const aiManager = require('../utils/aiUtilsManager');
 const { authenticateToken } = require('../middleware/auth');
 
 // 모든 라우트에 인증 미들웨어 적용
@@ -49,8 +50,16 @@ router.get('/words/:groupId/:count', async (req, res) => {
       limit: wordCount
     });
     
+    // 카테고리 정보 추가
+    const categoryConfig = aiManager.getCategoryConfig(group.category);
+    
     res.json({
       groupId,
+      groupName: group.name,
+      category: group.category,
+      categoryName: categoryConfig.name,
+      questionLabel: categoryConfig.questionLabel,
+      answerLabel: categoryConfig.answerLabel,
       totalWords: wordCount,
       words
     });
@@ -131,8 +140,8 @@ router.post('/ai-evaluation', async (req, res) => {
     for (const answer of answers) {
       const { wordId, english, expected, userAnswer } = answer;
       
-      // AI 평가 수행
-      const evaluation = await evaluateAnswer(english, expected, userAnswer);
+      // 카테고리별 AI 평가 수행
+      const evaluation = await aiManager.evaluateAnswer(group.category, english, expected, userAnswer);
       
       // 정답 개수 계산
       if (evaluation.isCorrect) {

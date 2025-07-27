@@ -134,7 +134,7 @@ npm run build
 log_success "프론트엔드 빌드 완료"
 cd ..
 
-# 8. 데이터베이스 연결 확인
+# 9. 데이터베이스 연결 확인
 log_info "데이터베이스 연결 확인..."
 cd backend
 timeout 10s node -e "
@@ -221,6 +221,11 @@ pm2 save
 
 # PM2 시스템 부팅 시 자동 시작 설정
 pm2 startup
+
+# nginx 재시작
+log_info "nginx 재시작 중..."
+sudo systemctl reload nginx
+log_success "nginx 재시작 완료"
 
 log_success "애플리케이션이 성공적으로 배포되었습니다!"
 

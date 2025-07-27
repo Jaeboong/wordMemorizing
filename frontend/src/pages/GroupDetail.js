@@ -9,6 +9,7 @@ const GroupDetail = () => {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newWord, setNewWord] = useState({ english: '', koreanList: [''] });
+  const [categoryConfig, setCategoryConfig] = useState(null);
   const englishInputRef = useRef(null);
   const koreanInputRefs = useRef([]);
 
@@ -24,9 +25,19 @@ const GroupDetail = () => {
   const fetchGroupDetails = async () => {
     try {
       setLoading(true);
-      const data = await groupApi.getGroupById(id);
-      setGroup(data);
-      setWords(data.words || []);
+      const [groupData, categoriesData] = await Promise.all([
+        groupApi.getGroupById(id),
+        groupApi.getCategories()
+      ]);
+      
+      setGroup(groupData);
+      setWords(groupData.words || []);
+      
+      // 그룹의 카테고리에 맞는 설정 찾기
+      const categoryConfig = categoriesData.categories.find(
+        cat => cat.key === (groupData.category || 'ENGLISH')
+      );
+      setCategoryConfig(categoryConfig);
     } catch (error) {
       console.error('그룹 상세 정보 로딩 중 오류 발생:', error);
       alert('그룹 정보를 불러오는 중 오류가 발생했습니다.');
@@ -84,7 +95,7 @@ const GroupDetail = () => {
   const handleAddWord = async (e) => {
     e.preventDefault();
     if (!newWord.english.trim() || !newWord.koreanList.some(k => k.trim() !== '')) {
-      alert('영어 단어와 최소 하나의 한글 해석을 입력해주세요.');
+      alert(`${categoryConfig?.questionLabel || '영어 단어'}와 최소 하나의 ${categoryConfig?.answerLabel || '한글 해석'}을 입력해주세요.`);
       return;
     }
 
@@ -173,35 +184,41 @@ const GroupDetail = () => {
         </div>
       </div>
 
-      <div className="card mb-4">
-        <div className="card-header">새 단어 추가</div>
+              <div className="card mb-4">
+        <div className="card-header">
+          새 {categoryConfig?.questionLabel || '단어'} 추가
+        </div>
         <div className="card-body">
           <form onSubmit={handleAddWord}>
             <div className="mb-3">
-              <label htmlFor="english" className="form-label">영어 단어</label>
+              <label htmlFor="english" className="form-label">
+                {categoryConfig?.questionLabel || '영어 단어'}
+              </label>
               <input
                 type="text"
                 className="form-control"
                 id="english"
-                placeholder="영어 단어"
+                placeholder={categoryConfig?.questionLabel || '영어 단어'}
                 name="english"
                 value={newWord.english}
                 onChange={handleEnglishChange}
                 onKeyDown={(e) => handleKeyDown(e, 0)}
                 ref={englishInputRef}
                 autoFocus
-                lang="en"
+                lang={categoryConfig?.key === 'ENGLISH' ? 'en' : 'ko'}
                 inputMode="text"
               />
             </div>
 
-            <label className="form-label">한글 해석 (탭 키를 눌러 추가 필드 생성)</label>
+            <label className="form-label">
+              {categoryConfig?.answerLabel || '한글 해석'} (탭 키를 눌러 추가 필드 생성)
+            </label>
             {newWord.koreanList.map((korean, index) => (
               <div className="input-group mb-2" key={index}>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder={`한글 해석 ${index + 1}`}
+                  placeholder={`${categoryConfig?.answerLabel || '한글 해석'} ${index + 1}`}
                   name="korean"
                   value={korean}
                   onChange={(e) => handleKoreanChange(index, e.target.value)}
@@ -245,8 +262,12 @@ const GroupDetail = () => {
             <thead>
               <tr>
                 <th scope="col" style={{ width: '5%' }}>#</th>
-                <th scope="col" style={{ width: '40%' }}>영어</th>
-                <th scope="col" style={{ width: '40%' }}>한글</th>
+                <th scope="col" style={{ width: '40%' }}>
+                  {categoryConfig?.questionLabel || '영어'}
+                </th>
+                <th scope="col" style={{ width: '40%' }}>
+                  {categoryConfig?.answerLabel || '한글'}
+                </th>
                 <th scope="col" style={{ width: '15%' }}>관리</th>
               </tr>
             </thead>
