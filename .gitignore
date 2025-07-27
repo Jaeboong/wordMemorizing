@@ -6,6 +6,8 @@ yarn-error.log
 .pnp/
 .pnp.js
 
+file
+
 # 빌드 결과물
 /build
 /dist

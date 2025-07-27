@@ -3,6 +3,7 @@ const router = express.Router();
 const { Word, WordGroup } = require('../models');
 const { Op } = require('sequelize');
 const { validateWords } = require('../utils/wordValidator');
+const aiManager = require('../utils/aiUtilsManager');
 const { sequelize } = require('../models');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -11,10 +12,14 @@ router.use(authenticateToken);
 
 // 단어 등록
 router.post('/', async (req, res) => {
-  const { groupId, english, korean } = req.body;
+  const { groupId, english, korean, question, answer } = req.body;
   
-  if (!groupId || !english || !korean) {
-    return res.status(400).json({ message: '그룹 ID, 영어 단어, 한글 해석이 모두 필요합니다.' });
+  // 유연한 필드명 지원 - question/answer 또는 english/korean
+  const questionValue = question || english;
+  const answerValue = answer || korean;
+  
+  if (!groupId || !questionValue || !answerValue) {
+    return res.status(400).json({ message: '그룹 ID, 문제, 답변이 모두 필요합니다.' });
   }
   
   try {
@@ -30,22 +35,30 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: '해당 그룹을 찾을 수 없습니다.' });
     }
     
+    // 카테고리 설정 가져오기
+    const categoryConfig = aiManager.getCategoryConfig(group.category);
+    
     const word = await Word.create({
       group_id: groupId,
-      english,
-      korean
+      english: questionValue,  // 실제 DB 필드명 유지
+      korean: answerValue      // 실제 DB 필드명 유지
     });
     
     res.status(201).json({
       id: word.id,
       groupId,
-      english,
-      korean,
-      message: '단어가 성공적으로 등록되었습니다.'
+      english: questionValue,
+      korean: answerValue,
+      question: questionValue,  // 호환성을 위한 추가 필드
+      answer: answerValue,      // 호환성을 위한 추가 필드
+      category: group.category,
+      questionLabel: categoryConfig.questionLabel,
+      answerLabel: categoryConfig.answerLabel,
+      message: '항목이 성공적으로 등록되었습니다.'
     });
   } catch (error) {
-    console.error('단어 등록 중 오류 발생:', error);
-    res.status(500).json({ message: '서버 오류로 단어 등록에 실패했습니다.' });
+    console.error('항목 등록 중 오류 발생:', error);
+    res.status(500).json({ message: '서버 오류로 항목 등록에 실패했습니다.' });
   }
 });
 

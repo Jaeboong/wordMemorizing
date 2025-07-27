@@ -23,6 +23,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
+    category: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: 'ENGLISH'
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

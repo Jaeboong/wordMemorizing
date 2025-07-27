@@ -16,6 +16,8 @@ const Words = () => {
   // 그룹 관리 상태
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ENGLISH');
+  const [categories, setCategories] = useState([]);
   const [editingGroup, setEditingGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
 
@@ -26,13 +28,16 @@ const Words = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [groupsData, wordsData] = await Promise.all([
+      const [groupsData, wordsData, categoriesData] = await Promise.all([
         groupApi.getAllGroups(),
-        wordApi.getAllWords()
+        wordApi.getAllWords(),
+        groupApi.getCategories()
       ]);
       
       setGroups(groupsData);
       setWords(wordsData);
+      setCategories(categoriesData.categories);
+      setSelectedCategory(categoriesData.defaultCategory);
     } catch (error) {
       console.error('데이터 로딩 중 오류 발생:', error);
     } finally {
@@ -421,7 +426,10 @@ const Words = () => {
     }
 
     try {
-      await groupApi.createGroup({ name: newGroupName });
+      await groupApi.createGroup({ 
+        name: newGroupName,
+        category: selectedCategory 
+      });
       setNewGroupName('');
       setShowCreateModal(false);
       await fetchData();
@@ -629,8 +637,8 @@ const Words = () => {
                   ) : (
                     <div className="empty-group">
                       <div className="empty-icon">📝</div>
-                      <p className="empty-text">단어가 없습니다</p>
-                      <p className="empty-subtext">다른 그룹에서 단어를 드래그해서 가져오세요</p>
+                      <p className="empty-text">{group.questionLabel || '단어'}가 없습니다</p>
+                      <p className="empty-subtext">다른 그룹에서 {group.questionLabel || '단어'}를 드래그해서 가져오세요</p>
                     </div>
                   )}
                 </div>
@@ -674,6 +682,26 @@ const Words = () => {
                 </div>
                 <form onSubmit={handleCreateGroup}>
                   <div className="modal-body">
+                    <div className="mb-3">
+                      <label htmlFor="categorySelect" className="form-label">카테고리</label>
+                      <select
+                        className="form-select"
+                        id="categorySelect"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                      >
+                        {categories.map(category => (
+                          <option key={category.key} value={category.key}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedCategory && categories.length > 0 && (
+                        <div className="form-text">
+                          {categories.find(c => c.key === selectedCategory)?.questionLabel} → {categories.find(c => c.key === selectedCategory)?.answerLabel} 형태로 학습 항목을 관리합니다.
+                        </div>
+                      )}
+                    </div>
                     <div className="mb-3">
                       <label htmlFor="groupName" className="form-label">그룹 이름</label>
                       <input

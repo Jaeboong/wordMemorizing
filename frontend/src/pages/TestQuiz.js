@@ -8,6 +8,7 @@ const TestQuiz = () => {
   
   const [loading, setLoading] = useState(true);
   const [groupName, setGroupName] = useState('');
+  const [categoryConfig, setCategoryConfig] = useState(null);
   const [words, setWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -32,6 +33,15 @@ const TestQuiz = () => {
       // 테스트 단어 가져오기
       const testData = await testApi.getTestWords(groupId, count);
       setWords(testData.words);
+      
+      // 카테고리 정보 설정
+      if (testData.categoryName) {
+        setCategoryConfig({
+          questionLabel: testData.questionLabel,
+          answerLabel: testData.answerLabel,
+          categoryName: testData.categoryName
+        });
+      }
       
       // 결과 배열 초기화
       setResults(new Array(testData.words.length).fill(null).map(() => ({
@@ -328,7 +338,9 @@ const TestQuiz = () => {
           <div className="mb-4 text-center">
             <div className="badge bg-secondary mb-2">문제 {currentIndex + 1}</div>
             <h3 className="display-4 mb-3">{currentWord.english}</h3>
-            <p className="text-muted">이 단어의 뜻을 한글로 입력하세요.</p>
+            <p className="text-muted">
+              이 {categoryConfig?.questionLabel || '단어'}의 {categoryConfig?.answerLabel || '뜻'}을 입력하세요.
+            </p>
           </div>
           
           {!aiMode && showFeedback ? (
@@ -344,7 +356,7 @@ const TestQuiz = () => {
                 <input
                   type="text"
                   className="form-control form-control-lg"
-                  placeholder="단어의 뜻을 입력하세요"
+                  placeholder={`${categoryConfig?.questionLabel || '단어'}의 ${categoryConfig?.answerLabel || '뜻'}을 입력하세요`}
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   autoFocus

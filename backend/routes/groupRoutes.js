@@ -3,28 +3,57 @@ const router = express.Router();
 const { WordGroup, Word, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { validateWords } = require('../utils/wordValidator');
+const aiManager = require('../utils/aiUtilsManager');
 const { authenticateToken } = require('../middleware/auth');
 
 // 모든 라우트에 인증 미들웨어 적용
 router.use(authenticateToken);
 
+// 사용 가능한 카테고리 목록 조회
+router.get('/categories', (req, res) => {
+  try {
+    const categories = aiManager.getAllCategories();
+    res.json({
+      success: true,
+      categories,
+      defaultCategory: aiManager.getDefaultCategory()
+    });
+  } catch (error) {
+    console.error('카테고리 목록 조회 중 오류 발생:', error);
+    res.status(500).json({ message: '카테고리 목록을 불러오는데 실패했습니다.' });
+  }
+});
+
 // 그룹 생성
 router.post('/', async (req, res) => {
-  const { name } = req.body;
+  const { name, category } = req.body;
   
   if (!name) {
     return res.status(400).json({ message: '그룹 이름이 필요합니다.' });
   }
   
+  // 카테고리 유효성 검사
+  const selectedCategory = category || aiManager.getDefaultCategory();
+  if (!aiManager.isValidCategory(selectedCategory)) {
+    return res.status(400).json({ message: '올바르지 않은 카테고리입니다.' });
+  }
+  
   try {
     const group = await WordGroup.create({ 
       name, 
+      category: selectedCategory,
       user_id: req.user.id 
     });
+    
+    const categoryConfig = aiManager.getCategoryConfig(selectedCategory);
     
     res.status(201).json({
       id: group.id,
       name,
+      category: selectedCategory,
+      categoryName: categoryConfig.name,
+      questionLabel: categoryConfig.questionLabel,
+      answerLabel: categoryConfig.answerLabel,
       message: '그룹이 성공적으로 생성되었습니다.'
     });
   } catch (error) {
@@ -60,8 +89,8 @@ router.get('/:id/validate', async (req, res) => {
       return res.status(404).json({ message: '해당 그룹에 단어가 없습니다.' });
     }
     
-    // AI로 단어 검증
-    const validationResults = await validateWords(words);
+    // 카테고리별 AI 검증
+    const validationResults = await aiManager.validateItems(group.category, words);
     console.log('검증 결과 전체:', JSON.stringify(validationResults, null, 2));
     
     // 잘못된 매칭이 있는 단어 또는 개선이 필요한 단어 필터링
@@ -226,7 +255,18 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']]
     });
     
-    res.json(groups);
+    // 카테고리 정보 추가
+    const groupsWithCategoryInfo = groups.map(group => {
+      const categoryConfig = aiManager.getCategoryConfig(group.category);
+      return {
+        ...group.toJSON(),
+        categoryName: categoryConfig.name,
+        questionLabel: categoryConfig.questionLabel,
+        answerLabel: categoryConfig.answerLabel
+      };
+    });
+    
+    res.json(groupsWithCategoryInfo);
   } catch (error) {
     console.error('그룹 조회 중 오류 발생:', error);
     res.status(500).json({ message: '서버 오류로 그룹 조회에 실패했습니다.' });

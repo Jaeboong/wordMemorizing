@@ -16,7 +16,7 @@ import TestHistory from './pages/TestHistory';
 import WordEdit from './pages/WordEdit';
 import { setupInputLanguageSupport, addLanguageStyles } from './utils/inputUtils';
 import { setToken } from './utils/auth';
-
+//test
 // 환경변수 정보 출력 (개발 환경에서만)
 const isDevelopment = process.env.NODE_ENV === 'development';
 const frontendPort = process.env.PORT || '4000';

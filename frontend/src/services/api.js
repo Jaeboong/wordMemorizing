@@ -54,6 +54,11 @@ export const wordApi = {
 
 // 그룹 관련 API
 export const groupApi = {
+  // 카테고리 목록 조회
+  getCategories: async () => {
+    const response = await axios.get(`${API_URL}/groups/categories`);
+    return response.data;
+  },
   // 그룹 생성
   createGroup: async (data) => {
     const response = await axios.post(`${API_URL}/groups`, data);
